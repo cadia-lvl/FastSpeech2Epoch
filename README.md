@@ -8,15 +8,8 @@ Please check preprocess_mat_data.py (code) and preprocess_mat_data.sh (arguments
 ```
 project_root/
 │
-├── src/
-│   ├── main.py
-│   └── utils.py
-│
-├── data/
-│   ├── train/
-│   └── test/
-│
-├── results/
-│
-└── README.md
+├─LJ001-0001.mat
+├─LJ001-0002.mat
+├─LJ001-0003.mat
+│....
 ```
