@@ -5,7 +5,7 @@ Please check preprocess_mat_data.py (code) and preprocess_mat_data.sh (arguments
 
 ### How the mat folder look like:
 
-
+```
 project_root/
 │
 ├── src/
@@ -19,3 +19,4 @@ project_root/
 ├── results/
 │
 └── README.md
+```
