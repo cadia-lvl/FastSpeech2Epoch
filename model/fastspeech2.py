@@ -45,21 +45,18 @@ class FastSpeech2(nn.Module):
 
     def forward(
         self,
-        speakers, # torch.Size([16])
-        texts, # torch.Size([16, 110])
+        speakers, 
+        texts,
         text_lens,
-        max_src_len,
-        mels=None, # torch.Size([16, 851, 80])
-        mel_lens=None, # torch.Size([16])
-        max_mel_len=None,
-        p_targets=None, # torch.Size([16, 110])
-        e_targets=None, # torch.Size([16, 110])
-        d_targets=None, # torch.Size([16, 110])
-        p_control=1.0,
-        e_control=1.0,
-        d_control=1.0,
+        max_text_len,
+        mels=None, 
+        phases=None, 
+        acoustic_lens=None, 
+        max_acoustic_len=None,
+        epochdurs=None, 
+        epochlens=None, 
     ):
-        src_masks = get_mask_from_lengths(src_lens, max_src_len)
+        src_masks = get_mask_from_lengths(text_lens, max_text_len)
         mel_masks = (
             get_mask_from_lengths(mel_lens, max_mel_len)
             if mel_lens is not None

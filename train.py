@@ -53,8 +53,6 @@ def main(args, configs):
     val_log_path = os.path.join(train_config["path"]["log_path"], "val")
     os.makedirs(train_log_path, exist_ok=True)
     os.makedirs(val_log_path, exist_ok=True)
-    # train_logger = SummaryWriter(train_log_path)
-    # val_logger = SummaryWriter(val_log_path)
 
     # Training
     step = args.restore_step + 1
