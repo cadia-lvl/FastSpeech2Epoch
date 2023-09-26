@@ -11,8 +11,7 @@ from utils.tools import pad_1D, pad_2D
 
 class Dataset(Dataset):
     def __init__(
-        self, filename, preprocess_config, train_config, sort=False, drop_last=False
-    ):
+        self, filename, preprocess_config, train_config, sort=False, drop_last=False):
         self.dataset_name = preprocess_config["dataset"]
         self.preprocessed_path = preprocess_config["path"]["preprocessed_path"]
         self.cleaners = preprocess_config["preprocessing"]["text"]["text_cleaners"]
@@ -21,6 +20,8 @@ class Dataset(Dataset):
         self.basename, self.speaker, self.text, self.raw_text = self.process_meta(filename)
         with open(os.path.join(self.preprocessed_path, "speakers.json")) as f:
             self.speaker_map = json.load(f)
+            
+        # The reason we use sort is to allow the model for learn from the short samples
         self.sort = sort
         self.drop_last = drop_last
 
@@ -33,40 +34,49 @@ class Dataset(Dataset):
         speaker_id = self.speaker_map[speaker]
         raw_text = self.raw_text[idx]
         phone = np.array(text_to_sequence(self.text[idx], self.cleaners))
+
+        # mel
         mel_path = os.path.join(
             self.preprocessed_path,
             "mel",
             "{}-mel-{}.npy".format(speaker, basename),
         )
         mel = np.load(mel_path)
-        pitch_path = os.path.join(
+        
+        # phase
+        phase_path = os.path.join(
             self.preprocessed_path,
-            "pitch",
-            "{}-pitch-{}.npy".format(speaker, basename),
+            "phase",
+            "{}-phase-{}.npy".format(speaker, basename),
         )
-        pitch = np.load(pitch_path)
-        energy_path = os.path.join(
+        phase = np.load(phase_path)
+        
+        # epoch amount for each phoneme
+        epochdur_path = os.path.join(
             self.preprocessed_path,
-            "energy",
-            "{}-energy-{}.npy".format(speaker, basename),
+            "epoch_dur",
+            "{}-epochdur-{}.npy".format(speaker, basename),
         )
-        energy = np.load(energy_path)
-        duration_path = os.path.join(
+        epochdur = np.load(epochdur_path)
+        
+        # epoch length
+        epochlen_path = os.path.join(
             self.preprocessed_path,
-            "duration",
-            "{}-duration-{}.npy".format(speaker, basename),
+            "epoch_len",
+            "{}-epochlen-{}.npy".format(speaker, basename),
         )
-        duration = np.load(duration_path)
+        epochlen = np.load(epochlen_path)
 
+        
         sample = {
             "id": basename,
             "speaker": speaker_id,
             "text": phone,
             "raw_text": raw_text,
             "mel": mel,
-            "pitch": pitch,
-            "energy": energy,
-            "duration": duration,
+            "phase": phase,
+            "epochdur": epochdur,
+            "epochlen": epochlen,
         }
 
         return sample
@@ -79,9 +89,9 @@ class Dataset(Dataset):
             speaker = []
             text = []
             raw_text = []
-            for line in f.readlines():
+            for line in f:
                 n, s, t, r = line.strip("\n").split("|")
-                t = t[1:-1]
+                t = t[1:-1] # remove '{' and '}'
                 name.append(n)
                 speaker.append(s)
                 text.append(t)
@@ -94,19 +104,22 @@ class Dataset(Dataset):
         texts = [data[idx]["text"] for idx in idxs]
         raw_texts = [data[idx]["raw_text"] for idx in idxs]
         mels = [data[idx]["mel"] for idx in idxs]
-        pitches = [data[idx]["pitch"] for idx in idxs]
-        energies = [data[idx]["energy"] for idx in idxs]
-        durations = [data[idx]["duration"] for idx in idxs]
+        phases = [data[idx]["phase"] for idx in idxs]
+        epochdurs = [data[idx]["epochdur"] for idx in idxs]
+        epochlens = [data[idx]["epochlen"] for idx in idxs]
 
         text_lens = np.array([text.shape[0] for text in texts])
-        mel_lens = np.array([mel.shape[0] for mel in mels])
+        mel_lens = np.array([mel.shape[-1] for mel in mels])
 
         speakers = np.array(speakers)
+        
         texts = pad_1D(texts)
+        
         mels = pad_2D(mels)
-        pitches = pad_1D(pitches)
-        energies = pad_1D(energies)
-        durations = pad_1D(durations)
+        phases = pad_2D(phases)
+        
+        epochdurs = pad_1D(epochdurs)
+        epochlens = pad_1D(epochlens)
 
         return (
             ids,
@@ -116,14 +129,31 @@ class Dataset(Dataset):
             text_lens,
             max(text_lens),
             mels,
+            phases,
             mel_lens,
             max(mel_lens),
-            pitches,
-            energies,
-            durations,
+            epochdurs,
+            epochlens
         )
 
     def collate_fn(self, data):
+        
+        '''
+            Output:
+                ids (e.g. LJ008-0031),
+                raw_texts (word-based transcription),
+                speakers (speaker id),
+                texts (phoneme ids),
+                text_lens (lenght of texts),
+                max text lengths,
+                mels,
+                phases,
+                acoustic_lens (the length of mels or phases),
+                max acoustic lengths,
+                epochdurs,
+                epochlens
+        '''
+        
         data_size = len(data)
 
         if self.sort:

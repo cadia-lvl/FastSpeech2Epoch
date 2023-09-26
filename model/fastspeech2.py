@@ -17,28 +17,31 @@ class FastSpeech2(nn.Module):
         super(FastSpeech2, self).__init__()
         self.model_config = model_config
 
+        # Phoneme Encoder
         self.encoder = Encoder(model_config)
+        
+        # Predict the epoch duration
         self.variance_adaptor = VarianceAdaptor(preprocess_config, model_config)
+        
+        # Decoder to generate mel, phase and epoch length
         self.decoder = Decoder(model_config)
-        self.mel_linear = nn.Linear(
-            model_config["transformer"]["decoder_hidden"],
-            preprocess_config["preprocessing"]["mel"]["n_mel_channels"],
-        )
-        self.postnet = PostNet()
+
+        # Convert the decoder output into mel
+        self.mel_postnet = PostNet()
+        
+        # Convert the decoder output into phase
+        self.phase_postnet = PostNet()
 
         self.speaker_emb = None
+        
+        # For ljspeech, this is False
         if model_config["multi_speaker"]:
             with open(
-                os.path.join(
-                    preprocess_config["path"]["preprocessed_path"], "speakers.json"
-                ),
-                "r",
+                os.path.join(preprocess_config["path"]["preprocessed_path"], "speakers.json"), "r",
             ) as f:
                 n_speaker = len(json.load(f))
-            self.speaker_emb = nn.Embedding(
-                n_speaker,
-                model_config["transformer"]["encoder_hidden"],
-            )
+                    
+            self.speaker_emb = nn.Embedding(n_speaker, model_config["transformer"]["encoder_hidden"])
 
     def forward(
         self,

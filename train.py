@@ -25,9 +25,7 @@ def main(args, configs):
     preprocess_config, model_config, train_config = configs
 
     # Get dataset
-    dataset = Dataset(
-        "all.txt", preprocess_config, train_config, sort=True, drop_last=True
-    )
+    dataset = Dataset("all.txt", preprocess_config, train_config, sort=True, drop_last=True)
     batch_size = train_config["optimizer"]["batch_size"]
     group_size = 4  # Set this larger than 1 to enable sorting in Dataset
     assert batch_size * group_size < len(dataset)
@@ -42,7 +40,7 @@ def main(args, configs):
     model, optimizer = get_model(args, configs, device, train=True)
     model = nn.DataParallel(model)
     num_param = get_param_num(model)
-    Loss = FastSpeech2Loss(preprocess_config, model_config).to(device)
+    # Loss = FastSpeech2Loss(preprocess_config, model_config).to(device)
     print("Number of FastSpeech2 Parameters:", num_param)
 
     # Load vocoder
@@ -78,6 +76,21 @@ def main(args, configs):
         inner_bar = tqdm(total=len(loader), desc="Epoch {}".format(epoch), position=1)
         for batchs in loader:
             for batch in batchs:
+                
+                '''
+                    ids,
+                    raw_texts,
+                    speakers,
+                    texts,
+                    text_lens,
+                    max_text_len,   
+                    mels,
+                    phases,
+                    acoustic_lens,
+                    max_acoustic_len,   
+                    epochdurs,
+                    epochlens
+                '''
                 batch = to_device(batch, device)
 
                 # Forward

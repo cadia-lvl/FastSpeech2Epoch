@@ -16,54 +16,48 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def to_device(data, device):
-    if len(data) == 12:
-        (
-            ids,
-            raw_texts,
-            speakers,
-            texts,
-            src_lens,
-            max_src_len,
-            mels,
-            mel_lens,
-            max_mel_len,
-            pitches,
-            energies,
-            durations,
-        ) = data
+    
+    (
+        ids,
+        raw_texts,
+        speakers,
+        texts,
+        text_lens,
+        max_text_len,
+        mels,
+        phases,
+        acoustic_lens,
+        max_acoustic_len,
+        epochdurs,
+        epochlens
+    )    = data
 
-        speakers = torch.from_numpy(speakers).long().to(device)
-        texts = torch.from_numpy(texts).long().to(device)
-        src_lens = torch.from_numpy(src_lens).to(device)
-        mels = torch.from_numpy(mels).float().to(device)
-        mel_lens = torch.from_numpy(mel_lens).to(device)
-        pitches = torch.from_numpy(pitches).float().to(device)
-        energies = torch.from_numpy(energies).to(device)
-        durations = torch.from_numpy(durations).long().to(device)
+    # I write the shape of each item (just an example), to have an idea of the data
+    speakers = torch.from_numpy(speakers).long().to(device) # torch.Size([1])
+    texts = torch.from_numpy(texts).long().to(device)   # torch.Size([1, 339]), 1 batch, 339 phonemes
+    text_lens = torch.from_numpy(text_lens).to(device)  # torch.Size([1])
+    mels = torch.from_numpy(mels).float().to(device)    # torch.Size([1, 80, 1725])
+    phases = torch.from_numpy(phases).float().to(device)    # torch.Size([1, 80, 1725]), same as mel
+    acoustic_lens = torch.from_numpy(acoustic_lens).to(device)  # torch.Size([1])
+    epochdurs = torch.from_numpy(epochdurs).long().to(device) # torch.Size([1, 106])
+    epochlens = torch.from_numpy(epochlens).long().to(device)   # torch.Size([1, 1725])
 
-        return (
-            ids,
-            raw_texts,
-            speakers,
-            texts,
-            src_lens,
-            max_src_len,
-            mels,
-            mel_lens,
-            max_mel_len,
-            pitches,
-            energies,
-            durations,
-        )
+    return (
+        ids,
+        raw_texts,
+        speakers,
+        texts,
+        text_lens,
+        max_text_len,   # just a number
+        mels,
+        phases,
+        acoustic_lens,
+        max_acoustic_len,   # just a number
+        epochdurs,
+        epochlens
+    )
 
-    if len(data) == 6:
-        (ids, raw_texts, speakers, texts, src_lens, max_src_len) = data
 
-        speakers = torch.from_numpy(speakers).long().to(device)
-        texts = torch.from_numpy(texts).long().to(device)
-        src_lens = torch.from_numpy(src_lens).to(device)
-
-        return (ids, raw_texts, speakers, texts, src_lens, max_src_len)
 
 
 def log(
