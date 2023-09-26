@@ -56,14 +56,14 @@ class FastSpeech2(nn.Module):
         epochdurs=None, 
         epochlens=None, 
     ):
-        src_masks = get_mask_from_lengths(text_lens, max_text_len)
-        mel_masks = (
-            get_mask_from_lengths(mel_lens, max_mel_len)
-            if mel_lens is not None
+        text_masks = get_mask_from_lengths(text_lens, max_text_len)
+        acoustic_masks = (
+            get_mask_from_lengths(acoustic_lens, max_acoustic_len)
+            if acoustic_lens is not None
             else None
         )
 
-        output = self.encoder(texts, src_masks)
+        output = self.encoder(texts, text_masks)
 
         if self.speaker_emb is not None:
             output = output + self.speaker_emb(speakers).unsqueeze(1).expand(

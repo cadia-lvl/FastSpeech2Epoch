@@ -108,8 +108,8 @@ class Dataset(Dataset):
         epochdurs = [data[idx]["epochdur"] for idx in idxs]
         epochlens = [data[idx]["epochlen"] for idx in idxs]
 
-        text_lens = np.array([text.shape[0] for text in texts])
-        mel_lens = np.array([mel.shape[-1] for mel in mels])
+        text_lens = np.array([text.shape[0] for text in texts]).reshape(-1, 1)
+        mel_lens = np.array([mel.shape[-1] for mel in mels]).reshape(-1, 1)
 
         speakers = np.array(speakers)
         
@@ -127,11 +127,11 @@ class Dataset(Dataset):
             speakers,
             texts,
             text_lens,
-            max(text_lens),
+            max(text_lens)[0],  # Just need a number
             mels,
             phases,
             mel_lens,
-            max(mel_lens),
+            max(mel_lens)[0],
             epochdurs,
             epochlens
         )
@@ -145,11 +145,11 @@ class Dataset(Dataset):
                 speakers (speaker id),
                 texts (phoneme ids),
                 text_lens (lenght of texts),
-                max text lengths,
+                max_text_lengths,
                 mels,
                 phases,
                 acoustic_lens (the length of mels or phases),
-                max acoustic lengths,
+                max_acoustic_lengths,
                 epochdurs,
                 epochlens
         '''

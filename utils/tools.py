@@ -35,10 +35,10 @@ def to_device(data, device):
     # I write the shape of each item (just an example), to have an idea of the data
     speakers = torch.from_numpy(speakers).long().to(device) # torch.Size([1])
     texts = torch.from_numpy(texts).long().to(device)   # torch.Size([1, 339]), 1 batch, 339 phonemes
-    text_lens = torch.from_numpy(text_lens).to(device)  # torch.Size([1])
+    text_lens = torch.from_numpy(text_lens).to(device)  # torch.Size([1, 1])
     mels = torch.from_numpy(mels).float().to(device)    # torch.Size([1, 80, 1725])
     phases = torch.from_numpy(phases).float().to(device)    # torch.Size([1, 80, 1725]), same as mel
-    acoustic_lens = torch.from_numpy(acoustic_lens).to(device)  # torch.Size([1])
+    acoustic_lens = torch.from_numpy(acoustic_lens).to(device)  # torch.Size([1, 1])
     epochdurs = torch.from_numpy(epochdurs).long().to(device) # torch.Size([1, 106])
     epochlens = torch.from_numpy(epochlens).long().to(device)   # torch.Size([1, 1725])
 
@@ -88,7 +88,7 @@ def get_mask_from_lengths(lengths, max_len=None):
         max_len = torch.max(lengths).item()
 
     ids = torch.arange(0, max_len).unsqueeze(0).expand(batch_size, -1).to(device)
-    mask = ids >= lengths.unsqueeze(1).expand(-1, max_len)
+    mask = ids >= lengths.expand(-1, max_len)
 
     return mask
 
