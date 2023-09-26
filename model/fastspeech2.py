@@ -47,7 +47,7 @@ class FastSpeech2(nn.Module):
         self,
         speakers, # torch.Size([16])
         texts, # torch.Size([16, 110])
-        src_lens,
+        text_lens,
         max_src_len,
         mels=None, # torch.Size([16, 851, 80])
         mel_lens=None, # torch.Size([16])
