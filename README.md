@@ -6,7 +6,7 @@ Please check preprocess_mat_data.py (code) and preprocess_mat_data.sh (arguments
 ### How the mat folder look like:
 
 ```
-project_root/
+Your mat folder/
 │
 ├─LJ001-0001.mat
 ├─LJ001-0002.mat
