@@ -35,40 +35,25 @@ class VarianceAdaptor(nn.Module):
         epochdurs_target=None
     ):
 
-        log_duration_prediction = self.duration_predictor(x, src_mask)
+        log_duration_prediction = self.duration_predictor(x, text_mask)
         
-        print()
-
-        if duration_target is not None:
-            x, mel_len = self.length_regulator(x, duration_target, max_len)
-            duration_rounded = duration_target
+        if epochdurs_target is not None:
+            x, acoustic_lens = self.length_regulator(x, epochdurs_target, max_acoustic_len)
+            epochdurs_rounded = epochdurs_target
         else:
-            duration_rounded = torch.clamp(
+            epochdurs_rounded = torch.clamp(
                 (torch.round(torch.exp(log_duration_prediction) - 1) * d_control),
                 min=0,
             )
-            x, mel_len = self.length_regulator(x, duration_rounded, max_len)
-            mel_mask = get_mask_from_lengths(mel_len)
-
-        if self.pitch_feature_level == "frame_level":
-            pitch_prediction, pitch_embedding = self.get_pitch_embedding(
-                x, pitch_target, mel_mask, p_control
-            )
-            x = x + pitch_embedding
-        if self.energy_feature_level == "frame_level":
-            energy_prediction, energy_embedding = self.get_energy_embedding(
-                x, energy_target, mel_mask, p_control
-            )
-            x = x + energy_embedding
+            x, acoustic_lens = self.length_regulator(x, epochdurs_rounded, max_acoustic_len)
+            acoustic_mask = get_mask_from_lengths(acoustic_lens)
 
         return (
             x,
-            pitch_prediction,
-            energy_prediction,
             log_duration_prediction,
-            duration_rounded,
-            mel_len,
-            mel_mask,
+            epochdurs_rounded,
+            acoustic_lens,
+            acoustic_mask,
         )
 
 

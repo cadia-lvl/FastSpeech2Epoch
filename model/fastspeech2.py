@@ -72,12 +72,10 @@ class FastSpeech2(nn.Module):
 
         (
             output,
-            p_predictions,
-            e_predictions,
             log_d_predictions,
             d_rounded,
-            mel_lens,
-            mel_masks,
+            acoustic_lens,
+            acoustic_masks,
         ) = self.variance_adaptor(
             output,
             text_masks,
@@ -86,7 +84,7 @@ class FastSpeech2(nn.Module):
             epochdurs
         )
 
-        output, mel_masks = self.decoder(output, mel_masks)
+        output, mel_masks = self.decoder(output, acoustic_masks)
         output = self.mel_linear(output)
 
         postnet_output = self.postnet(output) + output

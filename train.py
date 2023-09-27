@@ -24,7 +24,7 @@ def main(args, configs):
     preprocess_config, model_config, train_config = configs
 
     # Get dataset
-    dataset = Dataset("all.txt", preprocess_config, train_config, sort=True, drop_last=True)
+    dataset = Dataset("train.txt", preprocess_config, train_config, sort=True, drop_last=True)
     batch_size = train_config["optimizer"]["batch_size"]
     group_size = 4  # Set this larger than 1 to enable sorting in Dataset
     assert batch_size * group_size < len(dataset)
