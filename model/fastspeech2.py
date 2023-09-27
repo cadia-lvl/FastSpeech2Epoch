@@ -27,10 +27,13 @@ class FastSpeech2(nn.Module):
         self.decoder = Decoder(model_config)
 
         # Convert the decoder output into mel
-        self.mel_postnet = PostNet()
+        self.mel_postnet = PostNet(n_input=model_config['transformer']['decoder_hidden'])
         
         # Convert the decoder output into phase
-        self.phase_postnet = PostNet()
+        self.phase_postnet = PostNet(n_input=model_config['transformer']['decoder_hidden'])
+        
+        # Predict epoch lenghts from decoder output
+        self.epolen_postnet = PostNet(n_input=model_config['transformer']['decoder_hidden'], n_output=1)
 
         self.speaker_emb = None
         
@@ -85,19 +88,19 @@ class FastSpeech2(nn.Module):
         )
 
         output, mel_masks = self.decoder(output, acoustic_masks)
-        output = self.mel_linear(output)
 
-        postnet_output = self.postnet(output) + output
+        mel_prediction = self.mel_postnet(output)
+        phase_prediction = self.phase_postnet(output)
+        epochlen_prediction = self.epolen_postnet(output)
 
         return (
-            output,
-            postnet_output,
-            p_predictions,
-            e_predictions,
             log_d_predictions,
+            mel_prediction,
+            phase_prediction,
+            epochlen_prediction,
             d_rounded,
-            src_masks,
-            mel_masks,
-            src_lens,
-            mel_lens,
+            text_masks,
+            acoustic_masks,
+            text_lens,
+            acoustic_lens,
         )
