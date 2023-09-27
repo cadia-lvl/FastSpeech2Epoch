@@ -63,7 +63,7 @@ class FastSpeech2(nn.Module):
             else None
         )
 
-        output = self.encoder(texts, text_masks)
+        output = self.encoder(texts, text_masks)    # torch.Size([2, 374, 256])
 
         if self.speaker_emb is not None:
             output = output + self.speaker_emb(speakers).unsqueeze(1).expand(
@@ -80,15 +80,10 @@ class FastSpeech2(nn.Module):
             mel_masks,
         ) = self.variance_adaptor(
             output,
-            src_masks,
-            mel_masks,
-            max_mel_len,
-            p_targets,
-            e_targets,
-            d_targets,
-            p_control,
-            e_control,
-            d_control,
+            text_masks,
+            acoustic_masks,
+            max_acoustic_len,
+            epochdurs
         )
 
         output, mel_masks = self.decoder(output, mel_masks)

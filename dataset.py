@@ -91,7 +91,6 @@ class Dataset(Dataset):
             raw_text = []
             for line in f:
                 n, s, t, r = line.strip("\n").split("|")
-                t = t[1:-1] # remove '{' and '}'
                 name.append(n)
                 speaker.append(s)
                 text.append(t)

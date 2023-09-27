@@ -29,28 +29,15 @@ class VarianceAdaptor(nn.Module):
     def forward(
         self,
         x,
-        src_mask,
-        mel_mask=None,
-        max_len=None,
-        pitch_target=None,
-        energy_target=None,
-        duration_target=None,
-        p_control=1.0,
-        e_control=1.0,
-        d_control=1.0,
+        text_mask,
+        acoustic_mask=None,
+        max_acoustic_len=None,
+        epochdurs_target=None
     ):
 
         log_duration_prediction = self.duration_predictor(x, src_mask)
-        if self.pitch_feature_level == "phoneme_level":
-            pitch_prediction, pitch_embedding = self.get_pitch_embedding(
-                x, pitch_target, src_mask, p_control
-            )
-            x = x + pitch_embedding
-        if self.energy_feature_level == "phoneme_level":
-            energy_prediction, energy_embedding = self.get_energy_embedding(
-                x, energy_target, src_mask, p_control
-            )
-            x = x + energy_embedding
+        
+        print()
 
         if duration_target is not None:
             x, mel_len = self.length_regulator(x, duration_target, max_len)
