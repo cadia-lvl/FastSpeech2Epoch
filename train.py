@@ -1,13 +1,15 @@
 import argparse
 import os
 
-__import__('ipdb').set_trace()
-import torch
+# __import__('ipdb').set_trace()
 import yaml
+import torch
+
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
+import wandb
+import numpy as np
 
 from utils.model import get_model, get_vocoder, get_param_num
 from utils.tools import to_device, log, synth_one_sample
@@ -16,7 +18,22 @@ from dataset import Dataset
 
 from evaluate import evaluate
 
+
+random_seed = 1234 # or any of your favorite number 
+torch.manual_seed(random_seed)
+torch.cuda.manual_seed(random_seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+np.random.seed(random_seed)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# setup wandb
+run = wandb.init(
+    # Set the project where this run will be logged
+    project="FastSpeechEpoch"
+)
+
 
 def main(args, configs):
     print("Prepare training ...")
@@ -39,7 +56,7 @@ def main(args, configs):
     model, optimizer = get_model(args, configs, device, train=True)
     model = nn.DataParallel(model)
     num_param = get_param_num(model)
-    # Loss = FastSpeech2Loss(preprocess_config, model_config).to(device)
+    Loss = FastSpeech2Loss(preprocess_config, model_config).to(device)
     print("Number of FastSpeech2 Parameters:", num_param)
 
     # Load vocoder
@@ -73,7 +90,6 @@ def main(args, configs):
         inner_bar = tqdm(total=len(loader), desc="Epoch {}".format(epoch), position=1)
         for batchs in loader:
             for batch in batchs:
-                
                 '''
                     ids,
                     raw_texts,
@@ -95,7 +111,19 @@ def main(args, configs):
 
                 # Cal Loss
                 losses = Loss(batch, output)
-                total_loss = losses[0]
+                
+                (
+                    total_loss,
+                    mel_loss_l1,
+                    mel_loss_l2,
+                    phase_loss_l1,
+                    
+                    phase_loss_l2,
+                    duration_loss_l1,
+                    duration_loss_l2,
+                    length_loss_l1, 
+                    length_loss_l2 
+                ) = losses
 
                 # Backward
                 total_loss = total_loss / grad_acc_step
@@ -109,18 +137,21 @@ def main(args, configs):
                     optimizer.zero_grad()
 
                 if step % log_step == 0:
-                    losses = [l.item() for l in losses]
-                    message1 = "Step {}/{}, ".format(step, total_step)
-                    message2 = "Total Loss: {:.4f}, Mel Loss: {:.4f}, Mel PostNet Loss: {:.4f}, Pitch Loss: {:.4f}, Energy Loss: {:.4f}, Duration Loss: {:.4f}".format(
-                        *losses
-                    )
+                    losses_keys = ['Total Loss', 'Mel L1 Loss', 'Mel L2 Loss', 'Phase L1 Loss', 'Phase L2 Loss', 'Duration L1 Loss', 'Duration L2 Loss', 'Epoch Len L1 Loss', 'Epoch Len L2 Loss']
+                    losses_report = {l_key: l.item() for l_key, l in zip(losses_keys, losses)}
+                    # message1 = "Step {}/{}, ".format(step, total_step)
 
-                    with open(os.path.join(train_log_path, "log.txt"), "a") as f:
-                        f.write(message1 + message2 + "\n")
+                    # message2 = \
+                    # "Total Loss: {:.4f}, Mel L1 Loss: {:.4f}, Mel L2 Loss: {:.4f}, Phase L1 Loss: {:.4f}, Phase L2 Loss: {:.4f}, Duration L1 Loss: {:.4f}, Duration L2 Loss: {:.4f}, Epoch Len L1 Loos: {:.4f}, Epoch Len L2 Loos: {:.4f}".format(
+                    #     *losses_report
+                    # )
+                    
+                    
+                    wandb.log(losses_report, step=step)
 
-                    outer_bar.write(message1 + message2)
+                    # with open(os.path.join(train_log_path, "log.txt"), "a") as f:
+                    #     f.write(message1 + '\n' + message2 + "\n")
 
-                    log(train_logger, step, losses=losses)
 
                 if step % synth_step == 0:
                     fig, wav_reconstruction, wav_prediction, tag = synth_one_sample(

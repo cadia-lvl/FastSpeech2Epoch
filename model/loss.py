@@ -7,86 +7,100 @@ class FastSpeech2Loss(nn.Module):
 
     def __init__(self, preprocess_config, model_config):
         super(FastSpeech2Loss, self).__init__()
-        self.pitch_feature_level = preprocess_config["preprocessing"]["pitch"][
-            "feature"
-        ]
-        self.energy_feature_level = preprocess_config["preprocessing"]["energy"][
-            "feature"
-        ]
+
         self.mse_loss = nn.MSELoss()
         self.mae_loss = nn.L1Loss()
 
+            # log_d_predictions,
+            # mel_prediction,
+            # phase_prediction,
+            # epochlen_prediction,
+            # d_rounded,
+            # text_masks,
+            # acoustic_masks,
+            # text_lens,
+            # acoustic_lens,
+
     def forward(self, inputs, predictions):
         (
-            mel_targets, # torch.Size([16, 864, 80])
+            _,
+            _, 
             _,
             _,
-            pitch_targets, # torch.Size([16, 134])
-            energy_targets,
-            duration_targets, # torch.Size([16, 134])
-        ) = inputs[6:]
+            text_lens,
+            max_text_len,
+            mel_targets,
+            phase_targets,
+            acoustic_lens,
+            max_acoustic_len,
+            epochdur_targets,
+            epochlen_targets
+        ) = inputs
         (
-            mel_predictions, # torch.Size([16, 864, 80])
-            postnet_mel_predictions,
-            pitch_predictions, # Size([16, 134])
-            energy_predictions,
-            log_duration_predictions, # [16, 134]
+            log_epochdur_predictions,
+            mel_predictions,
+            phase_predictions, 
+            epochlen_predictions,
             _,
-            src_masks,
-            mel_masks,
+            text_masks,
+            acoustic_masks,
             _,
             _,
         ) = predictions
-        src_masks = ~src_masks
-        mel_masks = ~mel_masks
-        log_duration_targets = torch.log(duration_targets.float() + 1)
-        mel_targets = mel_targets[:, : mel_masks.shape[1], :]
-        mel_masks = mel_masks[:, :mel_masks.shape[1]]
+        
+        epochlen_predictions = epochlen_predictions.squeeze(-1)
+        mel_targets = mel_targets.transpose(1, 2)
+        phase_targets = phase_targets.transpose(1, 2)
+        
+        text_masks = ~text_masks
+        acoustic_masks = ~acoustic_masks
+        
+        log_epochdur_targets = torch.log(epochdur_targets.float())
+        
+        mel_targets = mel_targets[:, : acoustic_masks.shape[1], :]
+        acoustic_masks = acoustic_masks[:, :acoustic_masks.shape[1]]
 
-        log_duration_targets.requires_grad = False
-        pitch_targets.requires_grad = False
-        energy_targets.requires_grad = False
+        log_epochdur_targets.requires_grad = False
         mel_targets.requires_grad = False
+        phase_targets.requires_grad = False
+        epochlen_targets.requires_grad = False
 
-        if self.pitch_feature_level == "phoneme_level":
-            pitch_predictions = pitch_predictions.masked_select(src_masks)
-            pitch_targets = pitch_targets.masked_select(src_masks)
-        elif self.pitch_feature_level == "frame_level":
-            pitch_predictions = pitch_predictions.masked_select(mel_masks)
-            pitch_targets = pitch_targets.masked_select(mel_masks)
+        log_epochdur_predictions = log_epochdur_predictions.masked_select(text_masks)
+        log_epochdur_targets = log_epochdur_targets.masked_select(text_masks)
 
-        if self.energy_feature_level == "phoneme_level":
-            energy_predictions = energy_predictions.masked_select(src_masks)
-            energy_targets = energy_targets.masked_select(src_masks)
-        if self.energy_feature_level == "frame_level":
-            energy_predictions = energy_predictions.masked_select(mel_masks)
-            energy_targets = energy_targets.masked_select(mel_masks)
+        mel_predictions = mel_predictions.masked_select(acoustic_masks.unsqueeze(-1))
+        phase_predictions = phase_predictions.masked_select(acoustic_masks.unsqueeze(-1))
+        
+        mel_targets = mel_targets.masked_select(acoustic_masks.unsqueeze(-1))
+        phase_targets = phase_targets.masked_select(acoustic_masks.unsqueeze(-1))
+        
+        epochlen_predictions = epochlen_predictions.masked_select(acoustic_masks)
+        epochlen_targets = epochlen_targets.masked_select(acoustic_masks)
 
-        log_duration_predictions = log_duration_predictions.masked_select(src_masks)
-        log_duration_targets = log_duration_targets.masked_select(src_masks)
+        mel_loss_l1 = self.mae_loss(mel_predictions, mel_targets)
+        mel_loss_l2 = self.mse_loss(mel_predictions, mel_targets)
+        
+        phase_loss_l1 = self.mae_loss(phase_predictions, phase_targets)
+        phase_loss_l2 = self.mse_loss(phase_predictions, phase_targets)
 
-        mel_predictions = mel_predictions.masked_select(mel_masks.unsqueeze(-1))
-        postnet_mel_predictions = postnet_mel_predictions.masked_select(
-            mel_masks.unsqueeze(-1)
-        )
-        mel_targets = mel_targets.masked_select(mel_masks.unsqueeze(-1))
-
-        mel_loss = self.mae_loss(mel_predictions, mel_targets)
-        postnet_mel_loss = self.mae_loss(postnet_mel_predictions, mel_targets)
-
-        pitch_loss = self.mse_loss(pitch_predictions, pitch_targets)
-        energy_loss = self.mse_loss(energy_predictions, energy_targets)
-        duration_loss = self.mse_loss(log_duration_predictions, log_duration_targets)
+        duration_loss_l1 = self.mae_loss(log_epochdur_predictions, log_epochdur_targets)
+        duration_loss_l2 = self.mse_loss(log_epochdur_predictions, log_epochdur_targets)
+        
+        length_loss_l1 = self.mae_loss(epochlen_predictions, epochlen_targets)
+        length_loss_l2 = self.mse_loss(epochlen_predictions, epochlen_targets)
 
         total_loss = (
-            mel_loss + postnet_mel_loss + duration_loss + pitch_loss + energy_loss
+            mel_loss_l1 + mel_loss_l2 + phase_loss_l1 + phase_loss_l2 + duration_loss_l1 + duration_loss_l2 + length_loss_l1 + length_loss_l2
         )
 
         return (
             total_loss,
-            mel_loss,
-            postnet_mel_loss,
-            pitch_loss,
-            energy_loss,
-            duration_loss,
+            mel_loss_l1,
+            mel_loss_l2,
+            phase_loss_l1,
+            phase_loss_l2,
+            duration_loss_l1,
+            duration_loss_l2,
+            length_loss_l1, 
+            length_loss_l2
         )

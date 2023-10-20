@@ -40,7 +40,7 @@ def to_device(data, device):
     phases = torch.from_numpy(phases).float().to(device)    # torch.Size([1, 80, 1725]), same as mel
     acoustic_lens = torch.from_numpy(acoustic_lens).to(device)  # torch.Size([1, 1])
     epochdurs = torch.from_numpy(epochdurs).long().to(device) # torch.Size([1, 106])
-    epochlens = torch.from_numpy(epochlens).long().to(device)   # torch.Size([1, 1725])
+    epochlens = torch.from_numpy(epochlens).float().to(device)   # torch.Size([1, 1725])
 
     return (
         ids,

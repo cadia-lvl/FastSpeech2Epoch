@@ -1,0 +1,135 @@
+{
+    "os": "Linux-5.10.0-24-amd64-x86_64-with-glibc2.31",
+    "python": "3.11.4",
+    "heartbeatAt": "2023-10-20T13:13:54.099629",
+    "startedAt": "2023-10-20T13:13:53.319510",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "-p",
+        "/home/shijun/epoch_project/FastSpeech2Epoch/config/LJSpeech_epoch/preprocess.yaml",
+        "-m",
+        "/home/shijun/epoch_project/FastSpeech2Epoch/config/LJSpeech_epoch/model.yaml",
+        "-t",
+        "/home/shijun/epoch_project/FastSpeech2Epoch/config/LJSpeech_epoch/train.yaml"
+    ],
+    "state": "running",
+    "program": "/home/shijun/epoch_project/FastSpeech2Epoch/train.py",
+    "codePathLocal": "train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "https://github.com/cadia-lvl/FastSpeech2Epoch.git",
+        "commit": "531b53c72738646bb995635c2d4724d427dbf202"
+    },
+    "email": null,
+    "root": "/home/shijun/epoch_project/FastSpeech2Epoch",
+    "host": "hercules",
+    "username": "shijun",
+    "executable": "/home/shijun/miniconda3/bin/python",
+    "cpu_count": 16,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 2999.998999999999,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2999.999,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 15.538143157958984,
+            "used": 12.9373779296875
+        }
+    },
+    "gpu": "GRID A100-3-20C",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "GRID A100-3-20C",
+            "memory_total": 21470511104
+        }
+    ],
+    "memory": {
+        "total": 47.048370361328125
+    }
+}
