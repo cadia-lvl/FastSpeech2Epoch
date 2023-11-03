@@ -1,7 +1,7 @@
 dataset: "LJSpeech"
 
 path:
-  preprocessed_path: "/work/shijun/ljspeech/epoch_processed2"
+  preprocessed_path: "/work/shijun/ljspeech/epoch_processed3"
 
 preprocessing:
   val_size: 512

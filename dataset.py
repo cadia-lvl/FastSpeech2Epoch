@@ -24,6 +24,9 @@ class Dataset(Dataset):
         # The reason we use sort is to allow the model for learn from the short samples
         self.sort = sort
         self.drop_last = drop_last
+        
+        self.phase_min = -540.3069518961524
+        self.phase_max = 470.14039400175034
 
     def __len__(self):
         return len(self.text)
@@ -42,6 +45,8 @@ class Dataset(Dataset):
             "{}-mel-{}.npy".format(speaker, basename),
         )
         mel = np.load(mel_path)
+        # mel = np.log(mel+1)
+        mel = mel * 10
         
         # phase
         phase_path = os.path.join(
@@ -50,6 +55,9 @@ class Dataset(Dataset):
             "{}-phase-{}.npy".format(speaker, basename),
         )
         phase = np.load(phase_path)
+        # phase = (phase - self.phase_min) / (self.phase_max-self.phase_min)
+        # phase = phase * 10
+        # phase = 1 / (1 + np.exp(-phase))
         
         # epoch amount for each phoneme
         epochdur_path = os.path.join(

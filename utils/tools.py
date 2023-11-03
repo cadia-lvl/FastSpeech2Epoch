@@ -41,6 +41,8 @@ def to_device(data, device):
     acoustic_lens = torch.from_numpy(acoustic_lens).to(device)  # torch.Size([1, 1])
     epochdurs = torch.from_numpy(epochdurs).long().to(device) # torch.Size([1, 106])
     epochlens = torch.from_numpy(epochlens).float().to(device)   # torch.Size([1, 1725])
+    
+    
 
     return (
         ids,
@@ -54,7 +56,7 @@ def to_device(data, device):
         acoustic_lens,
         max_acoustic_len,   # just a number
         epochdurs,
-        epochlens
+        epochlens,
     )
 
 
@@ -293,6 +295,30 @@ def pad_2D(inputs, maxlen=None):
     return output
 
 
+def modify_length(input, maxlen):
+    def pad(x, max_len):
+        PAD = 0
+        if np.shape(x)[1] > max_len:
+            raise ValueError("not max_len")
+
+        x_padded = np.pad(
+            x, 
+            ((0, 0), (0, max_len - np.shape(x)[1])), 
+            mode="constant", constant_values=PAD
+        )
+        
+        return x_padded
+    
+    input_len = input.shape[-1]
+    
+    if input_len > maxlen:
+        return input[:, :maxlen]
+    elif input_len == maxlen:
+        return input
+    else:
+        return pad(input, maxlen)
+
+
 def pad(input_ele, mel_max_length=None):
     if mel_max_length:
         max_len = mel_max_length
@@ -312,3 +338,40 @@ def pad(input_ele, mel_max_length=None):
         out_list.append(one_batch_padded)
     out_padded = torch.stack(out_list)
     return out_padded
+
+def plot_spectrograms(ground_truth, prediction, save_path, title=None, ylabel="freq_bin"):
+    fig, axs = plt.subplots(2, 1, figsize=(10, 10))  # Create a figure with 2 subplots, one for each spectrogram
+
+    # Plotting the ground truth spectrogram
+    if title is not None:
+        axs[0].set_title(f'{title} (Ground Truth)')
+    axs[0].set_ylabel(ylabel)
+    axs[0].imshow(ground_truth, origin="lower", aspect="auto", interpolation="nearest")
+
+    # Plotting the prediction spectrogram
+    axs[1].set_title('Prediction' if title is None else f'{title} (Prediction)')
+    axs[1].set_ylabel(ylabel)
+    axs[1].imshow(prediction, origin="lower", aspect="auto", interpolation="nearest")
+
+    plt.tight_layout()  # Adjust the layout so that plots do not overlap
+    plt.savefig(save_path)  # Save the figure to the specified path
+    plt.close()  # Close the figure after saving to free up memory
+    
+def plot_lines(groundtruth, prediction, save_path):
+    
+    gt_len = list(range(groundtruth.shape[0]))
+    pred_len = list(range(prediction.shape[0]))
+    
+    # Plotting groundtruth (red) and prediction (blue) lines
+    plt.plot(gt_len, groundtruth, 'r', label='groundtruth')
+    plt.plot(pred_len, prediction, 'b', label='prediction')
+    
+    # Setting legends, title, and labels
+    plt.legend(loc='upper right')
+    plt.title('Groundtruth vs Prediction')
+    plt.xlabel('X-axis')
+    plt.ylabel('Y-axis')
+    
+    # Save the figure to the specified path
+    plt.savefig(save_path)
+    plt.close()

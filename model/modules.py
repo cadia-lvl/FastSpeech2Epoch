@@ -42,11 +42,11 @@ class VarianceAdaptor(nn.Module):
             epochdurs_rounded = epochdurs_target
         else:
             epochdurs_rounded = torch.clamp(
-                (torch.round(torch.exp(log_duration_prediction) - 1) * d_control),
+                (torch.round(torch.exp(log_duration_prediction))),
                 min=0,
             )
             x, acoustic_lens = self.length_regulator(x, epochdurs_rounded, max_acoustic_len)
-            acoustic_mask = get_mask_from_lengths(acoustic_lens)
+            acoustic_mask = get_mask_from_lengths(acoustic_lens.unsqueeze(0))
 
         return (
             x,

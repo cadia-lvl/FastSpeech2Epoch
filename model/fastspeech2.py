@@ -33,9 +33,11 @@ class FastSpeech2(nn.Module):
         self.phase_postnet = PostNet(n_input=model_config['transformer']['decoder_hidden'])
         
         # Predict epoch lenghts from decoder output
-        self.epolen_postnet = PostNet(n_input=model_config['transformer']['decoder_hidden'], n_output=1)
+        self.epolen_postnet = PostNet(n_input=model_config['transformer']['decoder_hidden'], n_output=256)
 
         self.speaker_emb = None
+        
+        # self.epolen_layer = nn.Linear(20, 30)
         
         # For ljspeech, this is False
         if model_config["multi_speaker"]:
@@ -68,11 +70,6 @@ class FastSpeech2(nn.Module):
 
         output = self.encoder(texts, text_masks)    # torch.Size([2, 374, 256])
 
-        if self.speaker_emb is not None:
-            output = output + self.speaker_emb(speakers).unsqueeze(1).expand(
-                -1, max_src_len, -1
-            )
-
         (
             output,
             log_d_predictions,
@@ -92,6 +89,8 @@ class FastSpeech2(nn.Module):
         mel_prediction = self.mel_postnet(output)
         phase_prediction = self.phase_postnet(output)
         epochlen_prediction = self.epolen_postnet(output)
+        
+        # epochlen_prediction = self.sp(epochlen_prediction)
 
         return (
             log_d_predictions,

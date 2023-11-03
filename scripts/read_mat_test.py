@@ -43,6 +43,7 @@ print(phones)
 
 _, mel, _, frames_t = read_mat(mat_path)
 
+
 phoneme2epoch = {}
 current_epoch_start_idx, current_epoch_start = 0, 0.0
 for current_phoneme_idx, (current_p, current_p_start, current_p_end) in enumerate(phones):

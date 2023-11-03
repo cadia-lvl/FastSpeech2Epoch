@@ -10,6 +10,12 @@ class FastSpeech2Loss(nn.Module):
 
         self.mse_loss = nn.MSELoss()
         self.mae_loss = nn.L1Loss()
+        self.ce_loss = nn.CrossEntropyLoss()
+
+        self.epolen_bins = nn.Parameter(
+                torch.linspace(0.0024999999999995026, 0.02400000000000002, 257 - 1),
+                requires_grad=False,
+            )
 
             # log_d_predictions,
             # mel_prediction,
@@ -34,8 +40,9 @@ class FastSpeech2Loss(nn.Module):
             acoustic_lens,
             max_acoustic_len,
             epochdur_targets,
-            epochlen_targets
+            epochlen_targets,
         ) = inputs
+        
         (
             log_epochdur_predictions,
             mel_predictions,
@@ -49,6 +56,7 @@ class FastSpeech2Loss(nn.Module):
         ) = predictions
         
         epochlen_predictions = epochlen_predictions.squeeze(-1)
+        
         mel_targets = mel_targets.transpose(1, 2)
         phase_targets = phase_targets.transpose(1, 2)
         
@@ -65,8 +73,8 @@ class FastSpeech2Loss(nn.Module):
         phase_targets.requires_grad = False
         epochlen_targets.requires_grad = False
 
-        log_epochdur_predictions = log_epochdur_predictions.masked_select(text_masks)
         log_epochdur_targets = log_epochdur_targets.masked_select(text_masks)
+        log_epochdur_predictions = log_epochdur_predictions.masked_select(text_masks)
 
         mel_predictions = mel_predictions.masked_select(acoustic_masks.unsqueeze(-1))
         phase_predictions = phase_predictions.masked_select(acoustic_masks.unsqueeze(-1))
@@ -74,24 +82,29 @@ class FastSpeech2Loss(nn.Module):
         mel_targets = mel_targets.masked_select(acoustic_masks.unsqueeze(-1))
         phase_targets = phase_targets.masked_select(acoustic_masks.unsqueeze(-1))
         
-        epochlen_predictions = epochlen_predictions.masked_select(acoustic_masks)
+        epochlen_predictions = epochlen_predictions.masked_select(acoustic_masks.unsqueeze(-1)).reshape(-1, 256)
         epochlen_targets = epochlen_targets.masked_select(acoustic_masks)
+        epochlen_targets_bucket = torch.bucketize(epochlen_targets, self.epolen_bins)
 
         mel_loss_l1 = self.mae_loss(mel_predictions, mel_targets)
         mel_loss_l2 = self.mse_loss(mel_predictions, mel_targets)
         
-        phase_loss_l1 = self.mae_loss(phase_predictions, phase_targets)
-        phase_loss_l2 = self.mse_loss(phase_predictions, phase_targets)
+        phase_loss_l1 = self.mae_loss(phase_predictions, phase_targets) / 50.0
+        phase_loss_l2 = self.mse_loss(phase_predictions, phase_targets) / 50.0
 
         duration_loss_l1 = self.mae_loss(log_epochdur_predictions, log_epochdur_targets)
         duration_loss_l2 = self.mse_loss(log_epochdur_predictions, log_epochdur_targets)
         
-        length_loss_l1 = self.mae_loss(epochlen_predictions, epochlen_targets)
-        length_loss_l2 = self.mse_loss(epochlen_predictions, epochlen_targets)
+        # length_loss_l1 = self.mae_loss(epochlen_predictions, epochlen_targets)
+        # length_loss_l2 = self.mse_loss(epochlen_predictions, epochlen_targets)
+        length_loss_ce = self.ce_loss(epochlen_predictions, epochlen_targets_bucket)
 
         total_loss = (
-            mel_loss_l1 + mel_loss_l2 + phase_loss_l1 + phase_loss_l2 + duration_loss_l1 + duration_loss_l2 + length_loss_l1 + length_loss_l2
+            mel_loss_l1 + mel_loss_l2 + phase_loss_l1 + phase_loss_l2 + duration_loss_l1 + duration_loss_l2 + length_loss_ce
         )
+        # total_loss = (
+        #     mel_loss_l1 + mel_loss_l2 + duration_loss_l1 + duration_loss_l2 + length_loss_l1 + length_loss_l2
+        # )
 
         return (
             total_loss,
@@ -101,6 +114,5 @@ class FastSpeech2Loss(nn.Module):
             phase_loss_l2,
             duration_loss_l1,
             duration_loss_l2,
-            length_loss_l1, 
-            length_loss_l2
+            length_loss_ce
         )

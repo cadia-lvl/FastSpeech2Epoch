@@ -43,3 +43,4 @@ symbols = (
     + _silences
 )
 # print(symbols)
+# print(len(symbols))

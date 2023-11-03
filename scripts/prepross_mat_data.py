@@ -33,7 +33,7 @@ def read_mat(mat_path):
 
     filename = mat_data['name']
     mel = mat_data['melbm']
-    phase = mat_data['diffmelbu']
+    phase = mat_data['melbu']
     frames_t = mat_data['frames_t']
     
     return (filename, mel, phase, frames_t)
@@ -98,9 +98,9 @@ def convert_epoch_len(frames_t):
         
     return np.array(result)
 
-mat_root_path = '/work/shijun/ljspeech/epoch_raw/LJSpeech'
+mat_root_path = '/work/shijun/ljspeech/epoch_raw3/LJSpeech_raw'
 tg_root_path = '/home/shijun/epoch_project/FastSpeech2/preprocessed_data/LJSpeech/TextGrid/TextGrid/LJSpeech'
-save_root_path = '/work/shijun/ljspeech/epoch_processed'
+save_root_path = '/work/shijun/ljspeech/epoch_processed3'
 
 mel_save_root = os.path.join(save_root_path, 'mel')
 phase_save_root = os.path.join(save_root_path, 'phase')

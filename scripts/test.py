@@ -34,9 +34,10 @@ def read_mat(mat_path):
     # Load the .mat file
     mat_data = mat73.loadmat(mat_path)
 
+
     filename = mat_data['name']
     mel = mat_data['melbm']
-    phase = mat_data['diffmelbu']
+    phase = mat_data['melbu']
     frames_t = mat_data['frames_t']
     
     return (filename, mel, phase, frames_t)
@@ -52,17 +53,41 @@ def plot_spectrogram(specgram, save_path, title=None, ylabel="freq_bin", ax=None
     plt.savefig(save_path)  # Save the figure to the specified path
     plt.close()  # Close the figure after saving to free up memory
 
-epochdur_file = '/work/shijun/ljspeech/epoch_processed/epoch_dur/LJSpeech-epochdur-LJ032-0248.npy'
-origin_mat_file = '/work/shijun/ljspeech/epoch_raw/LJSpeech/LJ032-0248.mat'
-tg_file = '/home/shijun/epoch_project/FastSpeech2/preprocessed_data/LJSpeech/TextGrid/TextGrid/LJSpeech/LJ032-0248.TextGrid'
+# epochdur_file = '/work/shijun/ljspeech/epoch_processed/epoch_dur/LJSpeech-epochdur-LJ032-0248.npy'
+origin_mat_file = '/work/shijun/ljspeech/epoch_raw3/LJSpeech_raw/LJ022-0154.mat'
+tg_file = '/home/shijun/epoch_project/FastSpeech2/preprocessed_data/LJSpeech/TextGrid/TextGrid/LJSpeech/LJ022-0154.TextGrid'
 
-epochdur = np.load(epochdur_file)
+# epochdur = np.load(epochdur_file)
 _, mel, phase, frames_t = read_mat(origin_mat_file)
-phonemes = get_alignment(tg_file)
-# print(mel.shape)
 # print(mel)
-plot_spectrogram(mel, save_path='/home/shijun/epoch_project/FastSpeech2_Epoch/mel.png')
-plot_spectrogram(phase, save_path='/home/shijun/epoch_project/FastSpeech2_Epoch/phase.png')
+# mean_mel = np.mean(mel)
+# min_mel = np.min(mel)
+# max_mel = np.max(mel)
+# print(mel[mel==0.0].shape)
+# print(mel.shape)
+# exit()
+# phase = (phase-min_phase) / max_phase
+print(mel.shape)
+# # exit()
+# phonemes = get_alignment(tg_file)
+# print(mel.shape)
+# # exit()
+
+# zero_mask = mel == 0
+# mel *= 10
+# mel[zero_mask] += 1
+min_phase = np.min(phase)
+max_phase = np.max(phase)
+phase = (phase-(-540.3069518961524))/((470.14039400175034) - (-540.3069518961524))
+# print(np.min(phase))
+# print(np.max(phase))
+# phase = 1 / (1 + np.exp(-phase))
+# exit()
+# print(mel.shape)
+# exit()
+# plot_spectrogram(mel, save_path='/home/shijun/epoch_project/FastSpeech2Epoch/mel.png')
+plot_spectrogram(mel, save_path='/home/shijun/epoch_project/FastSpeech2Epoch/mel.png')
+plot_spectrogram(phase, save_path='/home/shijun/epoch_project/FastSpeech2Epoch/phase.png')
 
 # print(epochdur)
 # print(phonemes)
